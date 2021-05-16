@@ -12,10 +12,6 @@ Entity::Entity() {
     collider.r = m_width / 2;
 }
 
-Entity::~Entity() {
-    free();
-}
-
 bool Entity::isCollidingWithBorder() {
     if (m_posX <= 0 || m_posX >= (SCREEN_W - m_width)) {
         return true;

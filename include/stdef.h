@@ -1,8 +1,10 @@
 #pragma once
 
-#define SCREEN_H        880
-#define SCREEN_W        1080
-#define SCREEN_FPS      60
+#define SCREEN_H            880
+#define SCREEN_W            1080
+#define SCREEN_FPS          60
+#define INTENDED_PLAYTIME   3600    // frames
+
 
 extern SDL_Window *g_window;
 extern SDL_Renderer *g_renderer;
@@ -24,6 +26,13 @@ enum class GameDifficulty {
     medium,
     hard
 };
+
+enum class CauseOfDeath {
+    outOfBorder,
+    asteroidHit,
+    cursorHit
+};
+extern CauseOfDeath g_causeofdeath;
 
 struct Circle {
     int x, y, r;

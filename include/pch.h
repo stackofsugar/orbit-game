@@ -14,3 +14,5 @@
 #include "Entity.h"
 #include "Player.h"
 #include "Asteroids.h"
+#include "ScrollingBg.h"
+#include "Cursor.h"

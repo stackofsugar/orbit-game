@@ -23,16 +23,20 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Asteroids.cpp" />
+    <ClCompile Include="src\Cursor.cpp" />
     <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Player.cpp" />
+    <ClCompile Include="src\ScrollingBg.cpp" />
     <ClCompile Include="src\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Asteroids.h" />
+    <ClInclude Include="include\Cursor.h" />
     <ClInclude Include="include\Entity.h" />
     <ClInclude Include="include\pch.h" />
     <ClInclude Include="include\Player.h" />
+    <ClInclude Include="include\ScrollingBg.h" />
     <ClInclude Include="include\stdef.h" />
     <ClInclude Include="include\Texture.h" />
   </ItemGroup>

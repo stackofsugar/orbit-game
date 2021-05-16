@@ -1,14 +1,13 @@
 #include "../include/pch.h"
 
-#define INTENDED_PLAYTIME       3600  // frames
-
 const int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
 
-bool g_isAlive = true;      // global extern
+bool g_isAlive = true;                  // global extern
 using namespace std;
 
-SDL_Window *g_window;       // global extern
-SDL_Renderer *g_renderer;   // global extern
+SDL_Window *g_window;                   // global extern
+SDL_Renderer *g_renderer;               // global extern
+CauseOfDeath g_causeofdeath;            // global extern
 
 bool loadMedia() {
 
@@ -40,6 +39,8 @@ bool init() {
     if (!loadMedia()) {
         return false;
     }
+
+    SDL_ShowCursor(SDL_DISABLE);
 
     return true;
 }
@@ -80,6 +81,16 @@ int main(int argc, char **argv) {
         handleErrors();
     }
 
+    ScrollingBg scrollingbg;
+    if (!scrollingbg.loadFromFile("res2//scrlbg.png")) {
+        handleErrors();
+    }
+
+    Cursor cursor;
+    if (!cursor.loadFromFile("res2//cursor.png")) {
+        handleErrors();
+    }
+
     srand((unsigned)(time(0)));
     SDL_Event ev = {};
     bool running = true;
@@ -89,6 +100,7 @@ int main(int argc, char **argv) {
 
     player.updateToInitialPosition();
     asteroid.initSpawn();
+    g_causeofdeath = CauseOfDeath::asteroidHit;
     //asteroid.DEBUG_SETXY(SCREEN_W / 2, SCREEN_H / 2 - 200);
 
     GameState gameState = GameState::mainMenu;
@@ -100,6 +112,7 @@ int main(int argc, char **argv) {
 
         while (SDL_PollEvent(&ev) != 0) {
             SDL_GetMouseState(&mouseStateX, &mouseStateY);
+            cursor.processAndUpdateMovement(mouseStateX, mouseStateY);
             if (ev.type == SDL_QUIT) {
                 running = false;
             }
@@ -114,6 +127,7 @@ int main(int argc, char **argv) {
                     if (ev.key.keysym.sym == SDLK_RETURN || ev.key.keysym.sym == SDLK_KP_ENTER) {
                         gameState = GameState::inGame;
                         cout << "entering game\n";
+                        scrollingbg.setIngameLoopStatus(true);
                     }
                 }
                 else if (gameState == GameState::mainMenu) {
@@ -132,6 +146,7 @@ int main(int argc, char **argv) {
                     if (ev.key.keysym.sym == SDLK_RETURN || ev.key.keysym.sym == SDLK_KP_ENTER) {
                         gameState = GameState::inGame;
                         cout << "entering game\n";
+                        scrollingbg.setIngameLoopStatus(true);
                     }
                 }
             }
@@ -139,6 +154,9 @@ int main(int argc, char **argv) {
 
         if (gameState == GameState::inGame) {
             elapsedFrameInGame++;
+
+            scrollingbg.calculateMove();
+            scrollingbg.render();
 
             player.processMovement(mouseStateX, mouseStateY);
             player.updateMove();
@@ -155,7 +173,7 @@ int main(int argc, char **argv) {
             asteroid.render();
 
             if (player.isCollided(asteroid)) {
-
+                g_causeofdeath = CauseOfDeath::asteroidHit;
                 g_isAlive = false;
             }
 
@@ -164,25 +182,29 @@ int main(int argc, char **argv) {
                 g_isAlive = true;
 
                 player.updateToInitialPosition();
-                asteroid.spawn();
+                asteroid.initSpawn();
                 elapsedFrameInGame = 0;
 
                 gameState = GameState::killedMenu;
+                scrollingbg.setIngameLoopStatus(false);
             }
         }
-        else if (gameState == GameState::inTutorial) {
-
-        }
         else if (gameState == GameState::mainMenu) {
-
+            scrollingbg.calculateMove();
+            scrollingbg.render();
+        }
+        else if (gameState == GameState::inTutorial) {
+            scrollingbg.calculateMove();
+            scrollingbg.render();
         }
         else if (gameState == GameState::pauseMenu) {
-
+            scrollingbg.render();
         }
         else if (gameState == GameState::killedMenu) {
-
+            scrollingbg.render();
         }
 
+        cursor.render();
         SDL_RenderPresent(g_renderer);
     }
 

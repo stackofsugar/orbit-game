@@ -10,14 +10,20 @@ Asteroids::~Asteroids() {
 }
 
 void Asteroids::spawn() {
-    m_accelX = m_accelY = m_velX = m_velY = 0;
+    m_accelX = m_accelY = m_velX = 0;
     collider.r = m_width / 2;
 
     m_posY = -m_height;
     m_posX = randRange(5, SCREEN_W - m_width - 5);
+
+    m_velY = h_vellocCap / 6;
+    cout << h_vellocCap << '\n';
 }
 
 void Asteroids::initSpawn() {
+    h_vellocCap = 50;
+    h_accelTimeCap = 20;
+    h_accelVariable = 1;
     spawn();
 }
 

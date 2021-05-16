@@ -9,8 +9,6 @@ protected:
 public:
     Entity();
 
-    ~Entity();
-
     bool isCollidingWithBorder();
 
     bool isCollided(Entity &other_entity);

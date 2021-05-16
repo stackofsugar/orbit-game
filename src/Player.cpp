@@ -9,10 +9,6 @@ Player::Player() {
     m_mouseX = m_mouseY = m_mouseDistanceXY = m_accelX = m_accelY = 0;
 }
 
-Player::~Player() {
-    free();
-}
-
 void Player::updateToInitialPosition() {
     m_posX = ((SCREEN_W / 2) - (m_width / 2) - 50);
     m_posY = ((SCREEN_H / 2) - (m_height / 2));
@@ -43,6 +39,13 @@ void Player::processMovement(int mouseX, int mouseY) {
     calculateMouseDistance();
     if (isCollidingWithBorder()) {
         g_isAlive = false;
+        g_causeofdeath = CauseOfDeath::outOfBorder;
+        return;
+    }
+    else if (m_mouseDistanceXY <= 25) {
+        g_isAlive = false;
+        g_causeofdeath = CauseOfDeath::cursorHit;
+        return;
     }
 
     // calculate acceleration

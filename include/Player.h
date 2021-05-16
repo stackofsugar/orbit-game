@@ -8,8 +8,6 @@ protected:
 public:
     Player();
 
-    ~Player();
-
     void updateToInitialPosition();
 
     void render();
