@@ -28,6 +28,7 @@ enum class GameDifficulty {
 };
 
 enum class CauseOfDeath {
+    Default,
     outOfBorder,
     asteroidHit,
     cursorHit

@@ -9,11 +9,6 @@ SDL_Window *g_window;                   // global extern
 SDL_Renderer *g_renderer;               // global extern
 CauseOfDeath g_causeofdeath;            // global extern
 
-bool loadMedia() {
-
-    return true;
-}
-
 bool init() {
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         return false;
@@ -21,7 +16,7 @@ bool init() {
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
-    g_window = SDL_CreateWindow("bepis", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+    g_window = SDL_CreateWindow("Orbit", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                 SCREEN_W, SCREEN_H, SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN);
     g_renderer = SDL_CreateRenderer(g_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
@@ -33,10 +28,6 @@ bool init() {
     int imgFlags = IMG_INIT_PNG;
 
     if (!(IMG_Init(imgFlags) & imgFlags)) {
-        return false;
-    }
-
-    if (!loadMedia()) {
         return false;
     }
 
@@ -91,16 +82,26 @@ int main(int argc, char **argv) {
         handleErrors();
     }
 
+    GameMenu mainMenu;
+    if (!mainMenu.loadFromFile("res2//menus//mainMenu.png")) {
+        handleErrors();
+    }
+
+    GameMenu pauseMenu;
+    if (!pauseMenu.loadFromFile("res2//menus//pauseMenu.png")) {
+        handleErrors();
+    }
+
     srand((unsigned)(time(0)));
     SDL_Event ev = {};
     bool running = true;
 
     SDL_RenderClear(g_renderer);
     SDL_RenderPresent(g_renderer);
-
+    
     player.updateToInitialPosition();
     asteroid.initSpawn();
-    g_causeofdeath = CauseOfDeath::asteroidHit;
+    g_causeofdeath = CauseOfDeath::Default;
     //asteroid.DEBUG_SETXY(SCREEN_W / 2, SCREEN_H / 2 - 200);
 
     GameState gameState = GameState::mainMenu;
@@ -145,9 +146,19 @@ int main(int argc, char **argv) {
                 else if (gameState == GameState::killedMenu) {
                     if (ev.key.keysym.sym == SDLK_RETURN || ev.key.keysym.sym == SDLK_KP_ENTER) {
                         gameState = GameState::inGame;
-                        cout << "entering game\n";
+                        cout << "respawned\n";
                         scrollingbg.setIngameLoopStatus(true);
                     }
+                }
+            }
+            else if (ev.type == SDL_MOUSEBUTTONDOWN) {
+                if (gameState == GameState::mainMenu) {
+                    gameState = GameState::inTutorial;
+                    cout << "entering tutorial\n";
+                }
+                else if (gameState == GameState::pauseMenu) {
+                    gameState = GameState::inGame;
+                    cout << "entering game\n";
                 }
             }
         }
@@ -192,6 +203,7 @@ int main(int argc, char **argv) {
         else if (gameState == GameState::mainMenu) {
             scrollingbg.calculateMove();
             scrollingbg.render();
+            mainMenu.render();
         }
         else if (gameState == GameState::inTutorial) {
             scrollingbg.calculateMove();
@@ -199,6 +211,9 @@ int main(int argc, char **argv) {
         }
         else if (gameState == GameState::pauseMenu) {
             scrollingbg.render();
+            player.render();
+            asteroid.render();
+            pauseMenu.render();
         }
         else if (gameState == GameState::killedMenu) {
             scrollingbg.render();

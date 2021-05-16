@@ -3,6 +3,12 @@ using namespace std;
 
 Asteroids::Asteroids() {
     m_accelX = m_accelY = h_frameTimeCount = h_vellocCap = h_accelTimeCap = h_accelVariable = 0;
+
+    random_device randev;
+    mt19937 gen(randev());
+    uniform_int_distribution<int> dist(5, SCREEN_W - m_width - 5);
+    m_dist = dist;
+    m_gen = gen;
 }
 
 Asteroids::~Asteroids() {
@@ -14,7 +20,7 @@ void Asteroids::spawn() {
     collider.r = m_width / 2;
 
     m_posY = -m_height;
-    m_posX = randRange(5, SCREEN_W - m_width - 5);
+    m_posX = m_dist(m_gen);
 
     m_velY = h_vellocCap / 6;
     cout << h_vellocCap << '\n';
