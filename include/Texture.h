@@ -24,4 +24,6 @@ public:
     void overrideWidth(int newWidth);
 
     void overrideHeight(int newHeight);
+
+    SDL_Texture *getTexture();
 };

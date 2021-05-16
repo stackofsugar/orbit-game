@@ -17,4 +17,5 @@
 #include "Asteroids.h"
 #include "ScrollingBg.h"
 #include "Cursor.h"
+#include "ButtonTwoState.h"
 #include "GameMenu.h"

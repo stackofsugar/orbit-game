@@ -60,3 +60,7 @@ void Texture::overrideWidth(int newWidth) {
 void Texture::overrideHeight(int newHeight) {
     m_height = newHeight;
 }
+
+SDL_Texture *Texture::getTexture() {
+    return m_texture;
+}

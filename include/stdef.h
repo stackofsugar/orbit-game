@@ -5,6 +5,9 @@
 #define SCREEN_FPS          60
 #define INTENDED_PLAYTIME   3600    // frames
 
+#ifdef _MSC_VER
+# pragma warning(disable: 26812)
+#endif
 
 extern SDL_Window *g_window;
 extern SDL_Renderer *g_renderer;
@@ -27,13 +30,18 @@ enum class GameDifficulty {
     hard
 };
 
-enum class CauseOfDeath {
-    Default,
+enum CauseOfDeath {
     outOfBorder,
     asteroidHit,
-    cursorHit
+    cursorHit,
+    Default
 };
 extern CauseOfDeath g_causeofdeath;
+
+enum ButtonRect {
+    hoverInactive = 0,
+    hoverActive
+};
 
 struct Circle {
     int x, y, r;

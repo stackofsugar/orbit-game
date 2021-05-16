@@ -20,7 +20,7 @@ void Asteroids::spawn() {
     collider.r = m_width / 2;
 
     m_posY = -m_height;
-    m_posX = m_dist(m_gen);
+    m_posX = 5 + m_dist(m_gen) % (SCREEN_W - m_width - 5);
 
     m_velY = h_vellocCap / 6;
     cout << h_vellocCap << '\n';

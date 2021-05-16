@@ -23,6 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Asteroids.cpp" />
+    <ClCompile Include="src\ButtonTwoState.cpp" />
     <ClCompile Include="src\Cursor.cpp" />
     <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\GameMenu.cpp" />
@@ -33,6 +34,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Asteroids.h" />
+    <ClInclude Include="include\ButtonTwoState.h" />
     <ClInclude Include="include\Cursor.h" />
     <ClInclude Include="include\Entity.h" />
     <ClInclude Include="include\GameMenu.h" />

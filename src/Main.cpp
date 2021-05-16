@@ -1,7 +1,5 @@
 #include "../include/pch.h"
 
-const int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
-
 bool g_isAlive = true;                  // global extern
 using namespace std;
 
@@ -63,34 +61,29 @@ int main(int argc, char **argv) {
     }
 
     Player player;
-    if (!player.loadFromFile("res2//redSmaller.png")) {
-        handleErrors();
-    }
-
     Asteroids asteroid;
-    if (!asteroid.loadFromFile("res2//asteroid.png")) {
-        handleErrors();
-    }
-
     ScrollingBg scrollingbg;
-    if (!scrollingbg.loadFromFile("res2//scrlbg.png")) {
-        handleErrors();
-    }
-
     Cursor cursor;
-    if (!cursor.loadFromFile("res2//cursor.png")) {
-        handleErrors();
-    }
-
     GameMenu mainMenu;
-    if (!mainMenu.loadFromFile("res2//menus//mainMenu.png")) {
+    GameMenu pauseMenu;
+    GameMenu killedMenu[3];
+    ButtonTwoState respawnButton;
+
+    if (!player.loadFromFile("res//entities//player.png")                               ||
+        !asteroid.loadFromFile("res//entities//asteroid.png")                           ||
+        !scrollingbg.loadFromFile("res//scrlbg.png")                                    ||
+        !cursor.loadFromFile("res//entities//cursor.png")                               ||
+        !mainMenu.loadFromFile("res//menus//mainMenu.png")                              ||
+        !pauseMenu.loadFromFile("res//menus//pauseMenu.png")                            ||
+        !respawnButton.loadFromFile("res//buttons//respawnButton.png")                  ||
+        !killedMenu[0].loadFromFile("res//menus//killedMenu//outOfBounds.png")          ||
+        !killedMenu[1].loadFromFile("res//menus//killedMenu//crashedToAsteroids.png")   ||
+        !killedMenu[2].loadFromFile("res//menus//killedMenu//crashedToMoon.png")
+        ) {
         handleErrors();
     }
 
-    GameMenu pauseMenu;
-    if (!pauseMenu.loadFromFile("res2//menus//pauseMenu.png")) {
-        handleErrors();
-    }
+    respawnButton.initSheet(true, SCREEN_W / 2, 544);
 
     srand((unsigned)(time(0)));
     SDL_Event ev = {};
@@ -98,11 +91,10 @@ int main(int argc, char **argv) {
 
     SDL_RenderClear(g_renderer);
     SDL_RenderPresent(g_renderer);
-    
+
     player.updateToInitialPosition();
     asteroid.initSpawn();
     g_causeofdeath = CauseOfDeath::Default;
-    //asteroid.DEBUG_SETXY(SCREEN_W / 2, SCREEN_H / 2 - 200);
 
     GameState gameState = GameState::mainMenu;
     int mouseStateX = 0, mouseStateY = 0, elapsedFrameInGame = 0,
@@ -151,7 +143,7 @@ int main(int argc, char **argv) {
                     }
                 }
             }
-            else if (ev.type == SDL_MOUSEBUTTONDOWN) {
+            else if (ev.type == SDL_MOUSEBUTTONUP) {
                 if (gameState == GameState::mainMenu) {
                     gameState = GameState::inTutorial;
                     cout << "entering tutorial\n";
@@ -159,6 +151,11 @@ int main(int argc, char **argv) {
                 else if (gameState == GameState::pauseMenu) {
                     gameState = GameState::inGame;
                     cout << "entering game\n";
+                }
+                else if (gameState == GameState::killedMenu && respawnButton.watchForMouseHover(mouseStateX, mouseStateY)) {
+                    gameState = GameState::inGame;
+                    cout << "respawned\n";
+                    scrollingbg.setIngameLoopStatus(true);
                 }
             }
         }
@@ -217,8 +214,18 @@ int main(int argc, char **argv) {
         }
         else if (gameState == GameState::killedMenu) {
             scrollingbg.render();
+            respawnButton.watchForMouseHover(mouseStateX, mouseStateY);
+            respawnButton.render();
+            if (g_causeofdeath == CauseOfDeath::outOfBorder) {
+                killedMenu[CauseOfDeath::outOfBorder].render();
+            }
+            else if (g_causeofdeath == CauseOfDeath::asteroidHit) {
+                killedMenu[CauseOfDeath::asteroidHit].render();
+            }
+            else if (g_causeofdeath == CauseOfDeath::cursorHit) {
+                killedMenu[CauseOfDeath::cursorHit].render();
+            }
         }
-
         cursor.render();
         SDL_RenderPresent(g_renderer);
     }
