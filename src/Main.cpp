@@ -46,7 +46,7 @@ void close() {
 
 // [lower, upper]
 int randRange(int lower, int upper) {
-    return (lower + rand() % (upper - lower + 1));
+    return (lower + ((lower + rand() % (upper - lower + 1)) ^ (lower + rand() % (upper - lower + 1))) % (upper - lower + 1));
 }
 
 void handleErrors() {
@@ -61,48 +61,60 @@ int main(int argc, char **argv) {
     }
 
     Player player;
-    Asteroids asteroid;
+    Asteroids asteroid[2];
     ScrollingBg scrollingbg;
     Cursor cursor;
     GameMenu mainMenu;
+    GameMenu tutorialMenu;
     GameMenu pauseMenu;
     GameMenu killedMenu[3];
+    GameMenu ingameOverlay;
     ButtonTwoState respawnButton;
+    ButtonTwoState spawnButton;
 
-    if (!player.loadFromFile("res//entities//player.png")                               ||
-        !asteroid.loadFromFile("res//entities//asteroid.png")                           ||
-        !scrollingbg.loadFromFile("res//scrlbg.png")                                    ||
-        !cursor.loadFromFile("res//entities//cursor.png")                               ||
-        !mainMenu.loadFromFile("res//menus//mainMenu.png")                              ||
-        !pauseMenu.loadFromFile("res//menus//pauseMenu.png")                            ||
-        !respawnButton.loadFromFile("res//buttons//respawnButton.png")                  ||
-        !killedMenu[0].loadFromFile("res//menus//killedMenu//outOfBounds.png")          ||
-        !killedMenu[1].loadFromFile("res//menus//killedMenu//crashedToAsteroids.png")   ||
-        !killedMenu[2].loadFromFile("res//menus//killedMenu//crashedToMoon.png")
+    if (!player.loadFromFile("res//entities//player.png") ||
+        !asteroid[0].loadFromFile("res//entities//asteroid.png") ||
+        !asteroid[1].loadFromFile("res//entities//asteroid.png") ||
+        !scrollingbg.loadFromFile("res//scrlbg.png") ||
+        !cursor.loadFromFile("res//entities//cursor.png") ||
+        !mainMenu.loadFromFile("res//menus//mainMenu.png") ||
+        !pauseMenu.loadFromFile("res//menus//pauseMenu.png") ||
+        !respawnButton.loadFromFile("res//buttons//respawnButton.png") ||
+        !spawnButton.loadFromFile("res//buttons//spawnButton.png") ||
+        !killedMenu[0].loadFromFile("res//menus//killedMenu//outOfBounds.png") ||
+        !killedMenu[1].loadFromFile("res//menus//killedMenu//crashedToAsteroids.png") ||
+        !killedMenu[2].loadFromFile("res//menus//killedMenu//crashedToMoon.png") ||
+        !tutorialMenu.loadFromFile("res//menus//tutorialMenu.png") ||
+        !ingameOverlay.loadFromFile("res//menus//ingameOverlaySmall.png")
         ) {
         handleErrors();
     }
 
     respawnButton.initSheet(true, SCREEN_W / 2, 544);
+    spawnButton.initSheet(true, SCREEN_W / 2, 727);
 
-    srand((unsigned)(time(0)));
     SDL_Event ev = {};
     bool running = true;
 
     SDL_RenderClear(g_renderer);
     SDL_RenderPresent(g_renderer);
 
-    player.updateToInitialPosition();
-    asteroid.initSpawn();
-    g_causeofdeath = CauseOfDeath::Default;
+    srand((unsigned)time(0));
 
+    asteroid[0].initSpawn(0, (float)randRange(0, 360),
+                          randRange(10, (SCREEN_W / 2) - (int)(asteroid[0].getWidth() * (float)(1.5f))));
+    asteroid[1].initSpawn(randRange(10, 100), (float)randRange(0, 360),
+                          randRange((SCREEN_W / 2) + (asteroid[1].getWidth() / 2), SCREEN_W - asteroid[1].getWidth() - 10));
+
+    g_causeofdeath = CauseOfDeath::Default;
     GameState gameState = GameState::mainMenu;
+
     int mouseStateX = 0, mouseStateY = 0, elapsedFrameInGame = 0,
         velocityValue = 0, accelTimeValue = 0, accelVariableValue = 0;
+    float spinAcceleration = 0.0f;
 
     while (running) {
         SDL_RenderClear(g_renderer);
-
         while (SDL_PollEvent(&ev) != 0) {
             SDL_GetMouseState(&mouseStateX, &mouseStateY);
             cursor.processAndUpdateMovement(mouseStateX, mouseStateY);
@@ -120,6 +132,7 @@ int main(int argc, char **argv) {
                     if (ev.key.keysym.sym == SDLK_RETURN || ev.key.keysym.sym == SDLK_KP_ENTER) {
                         gameState = GameState::inGame;
                         cout << "entering game\n";
+                        player.updateToInitialPosition(mouseStateX, mouseStateY);
                         scrollingbg.setIngameLoopStatus(true);
                     }
                 }
@@ -139,6 +152,7 @@ int main(int argc, char **argv) {
                     if (ev.key.keysym.sym == SDLK_RETURN || ev.key.keysym.sym == SDLK_KP_ENTER) {
                         gameState = GameState::inGame;
                         cout << "respawned\n";
+                        player.updateToInitialPosition(mouseStateX, mouseStateY);
                         scrollingbg.setIngameLoopStatus(true);
                     }
                 }
@@ -157,6 +171,12 @@ int main(int argc, char **argv) {
                     cout << "respawned\n";
                     scrollingbg.setIngameLoopStatus(true);
                 }
+                else if (gameState == GameState::inTutorial && spawnButton.watchForMouseHover(mouseStateX, mouseStateY)) {
+                    gameState = GameState::inGame;
+                    cout << "spawned\n";
+                    player.updateToInitialPosition(mouseStateX, mouseStateY);
+                    scrollingbg.setIngameLoopStatus(true);
+                }
             }
         }
 
@@ -173,29 +193,45 @@ int main(int argc, char **argv) {
             velocityValue = 50 + (int)(((float)elapsedFrameInGame / INTENDED_PLAYTIME) * (120 - 50));
             accelTimeValue = 20 + (int)(((float)elapsedFrameInGame / INTENDED_PLAYTIME) * (0 - 20));
             accelVariableValue = 1 + (int)(((float)elapsedFrameInGame / INTENDED_PLAYTIME) * (5 - 1));
+            spinAcceleration = 1.0f + ((float)elapsedFrameInGame / (float)INTENDED_PLAYTIME) * (5.0f - 1);
 
-            asteroid.setDifficulty(velocityValue, accelTimeValue, accelVariableValue);
-
-            asteroid.processMovement();
-            asteroid.updateMove();
-            asteroid.render();
-
-            if (player.isCollided(asteroid)) {
-                g_causeofdeath = CauseOfDeath::asteroidHit;
-                g_isAlive = false;
+            for (int i = 0; i < 2; i++) {
+                asteroid[i].setDifficulty(velocityValue, accelTimeValue, accelVariableValue, spinAcceleration);
+                asteroid[i].processMovement();
+                asteroid[i].updateMove();
+                asteroid[i].render();
+                if (player.isCollided(asteroid[i])) {
+                    g_causeofdeath = CauseOfDeath::asteroidHit;
+                    g_isAlive = false;
+                }
             }
+            if (asteroid[0].isVanishedFromScreen()) {
+                asteroid[0].spawn(randRange(10, (SCREEN_W / 2) - (int)(asteroid[0].getWidth() * (float)(1.5f))));
+            }
+            if (asteroid[1].isVanishedFromScreen()) {
+                asteroid[1].spawn(randRange((SCREEN_W / 2) + (asteroid[1].getWidth() / 2), SCREEN_W - asteroid[1].getWidth() - 10));
+            }
+
 
             if (!g_isAlive) {
                 cout << "you're dead\n";
                 g_isAlive = true;
 
-                player.updateToInitialPosition();
-                asteroid.initSpawn();
+                player.updateToInitialPosition(mouseStateX, mouseStateY);
+
+                srand((unsigned)time(0));
+
+                asteroid[0].initSpawn(0, (float)randRange(0, 360),
+                                      randRange(10, (SCREEN_W / 2) - (int)(asteroid[0].getWidth() * (float)(1.5f))));
+                asteroid[1].initSpawn(randRange(10, 100), (float)randRange(0, 360),
+                                      randRange((SCREEN_W / 2) + (asteroid[1].getWidth() / 2), SCREEN_W - asteroid[1].getWidth() - 10));
+
                 elapsedFrameInGame = 0;
 
                 gameState = GameState::killedMenu;
                 scrollingbg.setIngameLoopStatus(false);
             }
+            ingameOverlay.render();
         }
         else if (gameState == GameState::mainMenu) {
             scrollingbg.calculateMove();
@@ -204,12 +240,17 @@ int main(int argc, char **argv) {
         }
         else if (gameState == GameState::inTutorial) {
             scrollingbg.calculateMove();
+            spawnButton.watchForMouseHover(mouseStateX, mouseStateY);
+
             scrollingbg.render();
+            tutorialMenu.render();
+            spawnButton.render();
         }
         else if (gameState == GameState::pauseMenu) {
             scrollingbg.render();
             player.render();
-            asteroid.render();
+            asteroid[0].stationaryRender();
+            asteroid[1].stationaryRender();
             pauseMenu.render();
         }
         else if (gameState == GameState::killedMenu) {

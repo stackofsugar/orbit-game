@@ -2,7 +2,10 @@
 using namespace std;
 
 Asteroids::Asteroids() {
-    m_accelX = m_accelY = h_frameTimeCount = h_vellocCap = h_accelTimeCap = h_accelVariable = 0;
+    m_accelX = m_accelY = h_frameTimeCount = h_vellocCap = h_accelTimeCap = h_accelVariable = h_Yoffset = 0;
+    h_spinAcceleration = h_spinValue = 0.0f;
+
+    SDL_SetTextureBlendMode(m_texture, SDL_BLENDMODE_NONE);
 
     random_device randev;
     mt19937 gen(randev());
@@ -15,26 +18,27 @@ Asteroids::~Asteroids() {
     free();
 }
 
-void Asteroids::spawn() {
+void Asteroids::spawn(int randPosX) {
     m_accelX = m_accelY = m_velX = 0;
     collider.r = m_width / 2;
 
-    m_posY = -m_height;
-    m_posX = 5 + m_dist(m_gen) % (SCREEN_W - m_width - 5);
+    m_posY = -m_height - h_Yoffset;
+    m_posX = randPosX;
 
     m_velY = h_vellocCap / 6;
-    cout << h_vellocCap << '\n';
 }
 
-void Asteroids::initSpawn() {
+void Asteroids::initSpawn(int Yoffset, float spinOffset, int randPosX) {
+    h_Yoffset = Yoffset;
+    h_spinValue = spinOffset;
     h_vellocCap = 50;
     h_accelTimeCap = 20;
     h_accelVariable = 1;
-    spawn();
+    spawn(randPosX);
 }
 
 bool Asteroids::isVanishedFromScreen() {
-    if (m_posY >= SCREEN_W) {
+    if (m_posY >= SCREEN_W + 5) {
         return true;
     }
     else if (m_posX + m_width <= 0) {
@@ -65,10 +69,6 @@ void Asteroids::processMovement() {
 
     collider.x = m_posX + (m_width / 2);
     collider.y = m_posY + (m_height / 2);
-
-    if (isVanishedFromScreen()) {
-        spawn();
-    }
 }
 
 void Asteroids::updateMove() {
@@ -77,7 +77,18 @@ void Asteroids::updateMove() {
 }
 
 void Asteroids::render() {
-    Texture::render(m_posX, m_posY);
+    SDL_Rect renderTarget = { m_posX, m_posY, m_width, m_height };
+    h_spinValue += h_spinAcceleration;
+    if (h_spinValue >= 360.0f) {
+        h_spinValue = 0.0f;
+    }
+
+    SDL_RenderCopyEx(g_renderer, m_texture, NULL, &renderTarget, h_spinValue, NULL, SDL_FLIP_NONE);
+}
+
+void Asteroids::stationaryRender() {
+    SDL_Rect renderTarget = { m_posX, m_posY, m_width, m_height };
+    SDL_RenderCopyEx(g_renderer, m_texture, NULL, &renderTarget, h_spinValue, NULL, SDL_FLIP_NONE);
 }
 
 void Asteroids::DEBUG_SETXY(int x, int y) {
@@ -93,8 +104,9 @@ void Asteroids::DEBUG_SETXY(int x, int y) {
  \param newAccelTime 20 - 0
  \param newAccelVariable 1 - 4
 */
-void Asteroids::setDifficulty(int newVelocity, int newAccelTime, int newAccelVariable) {
+void Asteroids::setDifficulty(int newVelocity, int newAccelTime, int newAccelVariable, float newSpinAcceleration) {
     h_vellocCap = newVelocity;
     h_accelTimeCap = newAccelTime;
     h_accelVariable = newAccelVariable;
+    h_spinAcceleration = newSpinAcceleration;
 }

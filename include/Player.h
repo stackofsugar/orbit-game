@@ -4,15 +4,15 @@ using namespace std;
 
 class Player : public Entity {
 protected:
-    int m_mouseX, m_mouseY, m_mouseDistanceXY, m_accelX, m_accelY;
+    int m_mouseDistanceXY, m_accelX, m_accelY;
 public:
     Player();
 
-    void updateToInitialPosition();
+    void updateToInitialPosition(int mouseX, int mouseY);
 
     void render();
 
-    void calculateMouseDistance();
+    void calculateMouseDistance(int mouseX, int mouseY);
 
     void processMovement(int mouseX, int mouseY);
 

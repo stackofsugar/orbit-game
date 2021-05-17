@@ -6,12 +6,19 @@ int ACCEL_CAP = 1;
 int VELOC_CAP = 10;
 
 Player::Player() {
-    m_mouseX = m_mouseY = m_mouseDistanceXY = m_accelX = m_accelY = 0;
+    m_mouseDistanceXY = m_accelX = m_accelY = 0;
 }
 
-void Player::updateToInitialPosition() {
-    m_posX = ((SCREEN_W / 2) - (m_width / 2) - 50);
-    m_posY = ((SCREEN_H / 2) - (m_height / 2));
+void Player::updateToInitialPosition(int mouseX, int mouseY) {
+    m_posX = (mouseX - (m_width / 2) - 50);
+    m_posY = (mouseY - (m_height / 2) - 150);
+
+    if (m_posY <= 0) {
+        m_posY = 1;
+    }
+    if (m_posX <= 0) {
+        m_posX = 1;
+    }
 
     m_accelX = m_accelY = m_velY = 0;
     m_velX = 5;
@@ -23,20 +30,18 @@ void Player::render() {
     Texture::render(m_posX, m_posY);
 }
 
-void Player::calculateMouseDistance() {
+void Player::calculateMouseDistance(int mouseX, int mouseY) {
     //int centerPosX = m_posX + (m_width / 2),
     //    centerPosY = m_posY + (m_height / 2),
     //    Xdistance = abs(centerPosX - m_mouseX),
     //    Ydistance = abs(centerPosY - m_mouseY);
-    m_mouseDistanceXY = sqrt(pow((m_posX + (m_width / 2) - m_mouseX), 2) + 
-                             pow((m_posY + (m_height / 2) - m_mouseY), 2));
+    m_mouseDistanceXY = sqrt(pow((m_posX + (m_width / 2) - mouseX), 2) +
+                             pow((m_posY + (m_height / 2) - mouseY), 2));
 }
 
 void Player::processMovement(int mouseX, int mouseY) {
-    m_mouseX = mouseX;
-    m_mouseY = mouseY;
 
-    calculateMouseDistance();
+    calculateMouseDistance(mouseX, mouseY);
     if (isCollidingWithBorder()) {
         g_isAlive = false;
         g_causeofdeath = CauseOfDeath::outOfBorder;
@@ -50,10 +55,10 @@ void Player::processMovement(int mouseX, int mouseY) {
 
     // calculate acceleration
     // - calculate X acceleration
-    if (m_mouseX < m_posX + (m_width / 2) - 10) {
+    if (mouseX < m_posX + (m_width / 2) - 10) {
         m_accelX = -GRAVITY_CONSTANT / m_mouseDistanceXY;
     }
-    else if (m_mouseX > m_posX + (m_width / 2) + 10) {
+    else if (mouseX > m_posX + (m_width / 2) + 10) {
         m_accelX = GRAVITY_CONSTANT / m_mouseDistanceXY;
     }
     else {
@@ -61,10 +66,10 @@ void Player::processMovement(int mouseX, int mouseY) {
     }
 
     // - calculate Y acceleration
-    if (m_mouseY < m_posY + (m_height / 2) - 10) {
+    if (mouseY < m_posY + (m_height / 2) - 10) {
         m_accelY = -GRAVITY_CONSTANT / m_mouseDistanceXY;
     }
-    else if (m_mouseY > m_posY + (m_height / 2) + 10) {
+    else if (mouseY > m_posY + (m_height / 2) + 10) {
         m_accelY = GRAVITY_CONSTANT / m_mouseDistanceXY;
     }
     else {
