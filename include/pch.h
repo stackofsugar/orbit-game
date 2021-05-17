@@ -9,9 +9,11 @@
 
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 
 #include "stdef.h"
 #include "Texture.h"
+#include "Text.h"
 #include "Entity.h"
 #include "Player.h"
 #include "Asteroids.h"

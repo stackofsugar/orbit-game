@@ -7,8 +7,6 @@ protected:
     int m_accelX, m_accelY, h_frameTimeCount, h_Yoffset;
     int h_vellocCap, h_accelVariable, h_accelTimeCap;
     float h_spinValue, h_spinAcceleration;
-    uniform_int_distribution<int> m_dist;
-    mt19937 m_gen;
 public:
     Asteroids();
 

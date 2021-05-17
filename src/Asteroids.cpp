@@ -6,12 +6,6 @@ Asteroids::Asteroids() {
     h_spinAcceleration = h_spinValue = 0.0f;
 
     SDL_SetTextureBlendMode(m_texture, SDL_BLENDMODE_NONE);
-
-    random_device randev;
-    mt19937 gen(randev());
-    uniform_int_distribution<int> dist(5, SCREEN_W - m_width - 5);
-    m_dist = dist;
-    m_gen = gen;
 }
 
 Asteroids::~Asteroids() {

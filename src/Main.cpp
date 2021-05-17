@@ -15,7 +15,7 @@ bool init() {
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
     g_window = SDL_CreateWindow("Orbit", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                SCREEN_W, SCREEN_H, SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN);
+                                SCREEN_W, SCREEN_H, SDL_WINDOW_SHOWN);
     g_renderer = SDL_CreateRenderer(g_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
     if (!g_renderer || !g_window) {
@@ -26,6 +26,10 @@ bool init() {
     int imgFlags = IMG_INIT_PNG;
 
     if (!(IMG_Init(imgFlags) & imgFlags)) {
+        return false;
+    }
+
+    if (TTF_Init() == -1) {
         return false;
     }
 
@@ -61,7 +65,7 @@ int main(int argc, char **argv) {
     }
 
     Player player;
-    Asteroids asteroid[2];
+    Asteroids asteroid[3];
     ScrollingBg scrollingbg;
     Cursor cursor;
     GameMenu mainMenu;
@@ -71,10 +75,15 @@ int main(int argc, char **argv) {
     GameMenu ingameOverlay;
     ButtonTwoState respawnButton;
     ButtonTwoState spawnButton;
+    Text ingameScore;
+
+    // clear invalid texture error from NULL instantiations
+    SDL_ClearError();
 
     if (!player.loadFromFile("res//entities//player.png") ||
         !asteroid[0].loadFromFile("res//entities//asteroid.png") ||
         !asteroid[1].loadFromFile("res//entities//asteroid.png") ||
+        !asteroid[2].loadFromFile("res//entities//asteroid.png") ||
         !scrollingbg.loadFromFile("res//scrlbg.png") ||
         !cursor.loadFromFile("res//entities//cursor.png") ||
         !mainMenu.loadFromFile("res//menus//mainMenu.png") ||
@@ -89,6 +98,7 @@ int main(int argc, char **argv) {
         ) {
         handleErrors();
     }
+    TTF_Font *ingameScoreFont = TTF_OpenFont("res//font//font.ttf", 39);
 
     respawnButton.initSheet(true, SCREEN_W / 2, 544);
     spawnButton.initSheet(true, SCREEN_W / 2, 727);
@@ -105,6 +115,9 @@ int main(int argc, char **argv) {
                           randRange(10, (SCREEN_W / 2) - (int)(asteroid[0].getWidth() * (float)(1.5f))));
     asteroid[1].initSpawn(randRange(10, 100), (float)randRange(0, 360),
                           randRange((SCREEN_W / 2) + (asteroid[1].getWidth() / 2), SCREEN_W - asteroid[1].getWidth() - 10));
+    asteroid[2].initSpawn(randRange(10, 200), (float)randRange(0, 360), (SCREEN_W / 2) - (asteroid[2].getWidth() / 2));
+
+    ingameScore.setProperties(ingameScoreFont, 0xFF, 0xFF, 0xFF, 0xFF, 190, 14);
 
     g_causeofdeath = CauseOfDeath::Default;
     GameState gameState = GameState::mainMenu;
@@ -112,6 +125,7 @@ int main(int argc, char **argv) {
     int mouseStateX = 0, mouseStateY = 0, elapsedFrameInGame = 0,
         velocityValue = 0, accelTimeValue = 0, accelVariableValue = 0;
     float spinAcceleration = 0.0f;
+    string score;
 
     while (running) {
         SDL_RenderClear(g_renderer);
@@ -190,12 +204,18 @@ int main(int argc, char **argv) {
             player.updateMove();
             player.render();
 
+            score = to_string(elapsedFrameInGame / 60);
+            ingameScore.setPosition(190, 14);
+            if (!ingameScore.loadText(score)) {
+                handleErrors();
+            }
+
             velocityValue = 50 + (int)(((float)elapsedFrameInGame / INTENDED_PLAYTIME) * (120 - 50));
             accelTimeValue = 20 + (int)(((float)elapsedFrameInGame / INTENDED_PLAYTIME) * (0 - 20));
             accelVariableValue = 1 + (int)(((float)elapsedFrameInGame / INTENDED_PLAYTIME) * (5 - 1));
             spinAcceleration = 1.0f + ((float)elapsedFrameInGame / (float)INTENDED_PLAYTIME) * (5.0f - 1);
 
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 3; i++) {
                 asteroid[i].setDifficulty(velocityValue, accelTimeValue, accelVariableValue, spinAcceleration);
                 asteroid[i].processMovement();
                 asteroid[i].updateMove();
@@ -211,6 +231,9 @@ int main(int argc, char **argv) {
             if (asteroid[1].isVanishedFromScreen()) {
                 asteroid[1].spawn(randRange((SCREEN_W / 2) + (asteroid[1].getWidth() / 2), SCREEN_W - asteroid[1].getWidth() - 10));
             }
+            if (asteroid[2].isVanishedFromScreen()) {
+                asteroid[2].spawn(mouseStateX - (asteroid[2].getWidth() / 2));
+            }
 
 
             if (!g_isAlive) {
@@ -225,6 +248,9 @@ int main(int argc, char **argv) {
                                       randRange(10, (SCREEN_W / 2) - (int)(asteroid[0].getWidth() * (float)(1.5f))));
                 asteroid[1].initSpawn(randRange(10, 100), (float)randRange(0, 360),
                                       randRange((SCREEN_W / 2) + (asteroid[1].getWidth() / 2), SCREEN_W - asteroid[1].getWidth() - 10));
+                asteroid[2].initSpawn(randRange(10, 200), (float)randRange(0, 360), (SCREEN_W / 2) - (asteroid[2].getWidth() / 2));
+
+                score = "Your score: " + to_string(elapsedFrameInGame / 60);
 
                 elapsedFrameInGame = 0;
 
@@ -232,6 +258,7 @@ int main(int argc, char **argv) {
                 scrollingbg.setIngameLoopStatus(false);
             }
             ingameOverlay.render();
+            ingameScore.render();
         }
         else if (gameState == GameState::mainMenu) {
             scrollingbg.calculateMove();
@@ -249,9 +276,12 @@ int main(int argc, char **argv) {
         else if (gameState == GameState::pauseMenu) {
             scrollingbg.render();
             player.render();
-            asteroid[0].stationaryRender();
-            asteroid[1].stationaryRender();
+            for (int i = 0; i < 3; i++) {
+                asteroid[i].stationaryRender();
+            }
             pauseMenu.render();
+            ingameScore.render();
+            ingameOverlay.render();
         }
         else if (gameState == GameState::killedMenu) {
             scrollingbg.render();
@@ -266,8 +296,12 @@ int main(int argc, char **argv) {
             else if (g_causeofdeath == CauseOfDeath::cursorHit) {
                 killedMenu[CauseOfDeath::cursorHit].render();
             }
+            ingameScore.loadText(score);
+            ingameScore.setPosition((SCREEN_W / 2) - (ingameScore.getWidth() / 2), 430);
+            ingameScore.render();
         }
         cursor.render();
+
         SDL_RenderPresent(g_renderer);
     }
 
