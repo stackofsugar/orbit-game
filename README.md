@@ -7,8 +7,8 @@
 
 <!-- Badges -->
 <p align="center">
-    <!-- Project Status: Active -->
-    <img src="https://img.shields.io/badge/status-abandoned-orange?style=for-the-badge&labelColor=black" />
+    <!-- Project Status: Completed -->
+    <img src="https://img.shields.io/badge/status-completed-orange?style=for-the-badge&labelColor=black" />
     <!-- License -->
     <a href="https://github.com/stackofsugar/orbit-game/blob/master/LICENSE">
         <img src="https://img.shields.io/github/license/stackofsugar/orbit-game?style=for-the-badge&labelColor=black&color=green" />
